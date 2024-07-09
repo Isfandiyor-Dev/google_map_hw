@@ -15,7 +15,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen> {
   late GoogleMapController myController;
   LatLng myCurrentLocation = const LatLng(41.927689, -122.985711);
-
+  LatLng? selectedLocation;
   @override
   void initState() {
     super.initState();
@@ -34,7 +34,13 @@ class _MapScreenState extends State<MapScreen> {
         CameraUpdate.newLatLng(myCurrentLocation),
       );
     } else {
-      // Handle case where location is null (maybe show a snackbar or toast)
+      const SnackBar(
+        content: Row(
+          children: [
+            Text("Sizning manzilingizni aniqlab bo'lmadi!"),
+          ],
+        ),
+      );
     }
   }
 
@@ -45,7 +51,7 @@ class _MapScreenState extends State<MapScreen> {
   final _yourGoogleAPIKey = 'AIzaSyBEjfX9jrWudgRcWl2scld4R7s0LtlaQmQ';
   final _textController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
+  final AutovalidateMode _autovalidateMode = AutovalidateMode.disabled;
 
   @override
   Widget build(BuildContext context) {
@@ -59,16 +65,32 @@ class _MapScreenState extends State<MapScreen> {
               zoom: 10.0,
             ),
             mapType: MapType.normal,
+            onTap: (argument) {
+              selectedLocation = argument;
+              setState(() {});
+            },
             markers: {
               Marker(
-                markerId: const MarkerId("home"),
-                icon: BitmapDescriptor.defaultMarker,
+                markerId: const MarkerId("current"),
+                icon: BitmapDescriptor.defaultMarkerWithHue(
+                  BitmapDescriptor.hueAzure,
+                ),
                 position: myCurrentLocation,
                 infoWindow: const InfoWindow(
-                  title: "Home",
-                  snippet: "Bu mening uyim",
+                  title: "Current place",
+                  snippet: "Siz turgan joy",
                 ),
               ),
+              if (selectedLocation != null)
+                Marker(
+                  markerId: const MarkerId("selected"),
+                  icon: BitmapDescriptor.defaultMarker,
+                  position: selectedLocation!,
+                  infoWindow: const InfoWindow(
+                    title: "Selected Place",
+                    snippet: "Siz tanlagan joy",
+                  ),
+                ),
             },
           ),
           Positioned(
@@ -86,7 +108,6 @@ class _MapScreenState extends State<MapScreen> {
                     filled: true,
                     hintText: 'Enter your address',
                     labelText: 'Address',
-                    labelStyle: TextStyle(color: Colors.purple),
                     border: OutlineInputBorder(),
                   ),
                   validator: (value) {
@@ -104,13 +125,13 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   getPlaceDetailWithLatLng: (prediction) {
                     if ((prediction.lat != null) && prediction.lng != null) {
-                      myCurrentLocation = LatLng(
+                      selectedLocation = LatLng(
                         double.parse(prediction.lat!),
                         double.parse(prediction.lng!),
                       );
                       setState(() {});
                       myController.animateCamera(
-                        CameraUpdate.newLatLng(myCurrentLocation),
+                        CameraUpdate.newLatLng(selectedLocation!),
                       );
                     }
                   },
